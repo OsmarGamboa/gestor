@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Gestión de Tareas</title>
+   <style>
+       body {
+           font-family: Arial, sans-serif; 
+           margin: 20px; 
+           background-color: #f4f4f4; /* Color gris claro */
+           color: #333; /* Texto oscuro para mejor contraste */
+       }
+       #tareas { 
+           margin-top: 20px; 
+           background-color: #ffffff; /* Fondo blanco para el contenedor */
+           border-radius: 5px; 
+           padding: 10px; 
+           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
+       }
+       .tarea { 
+           display: flex; 
+           justify-content: space-between; 
+           padding: 10px; 
+           border: 1px solid #ccc; 
+           margin-bottom: 5px; 
+           border-radius: 5px; 
+       }
+       .prioridad-baja { background-color: #d4edda; /* Verde claro */ color: green; }
+       .prioridad-media { background-color: #fff3cd; /* Amarillo claro */ color: orange; }
+       .prioridad-alta { background-color: #f8d7da; /* Rojo claro */ color: red; }
+       #footer { 
+           margin-top: 20px; 
+       }
+       input, select, button {
+           padding: 10px;
+           margin: 5px 0;
+           border-radius: 5px;
+           border: 1px solid #ccc;
+       }
+       button {
+           background-color: #007BFF; /* Color azul para el botón */
+           color: white; 
+           border: none; 
+           cursor: pointer; 
+       }
+       button:hover {
+           background-color: #0056b3; /* Color más oscuro al pasar el mouse */
+       }
+   </style>
+</head>
+<body>
+
+   <h1>Lista de Tareas</h1>
+   <div>
+       <input type="text" id="nombre" placeholder="Nombre de la tarea" required>
+       <select id="prioridad">
+           <option value="Baja">Baja</option>
+           <option value="Media">Media</option>
+           <option value="Alta">Alta</option>
+       </select>
+       <button onclick="agregarTarea()">Agregar Tarea</button>
+       <label>
+           <input type="checkbox" id="mostrarCompletadas" onchange="mostrarTareas()"> Mostrar solo completadas
+       </label>
+       <select id="filtroPrioridad" onchange="mostrarTareas()">
+           <option value="Todas">Todas</option>
+           <option value="Baja">Baja</option>
+           <option value="Media">Media</option>
+           <option value="Alta">Alta</option>
+       </select>
+   </div>
+   
+   <div id="tareas"></div>
+
+   <div id="footer">
+       <p id="totalTareas"></p>
+       <p id="totalCompletadas"></p>
+   </div>
+
+   <script>
+       class Tarea {
+           constructor(nombre, prioridad, estado, fechaCreacion) {
+               this.nombre = nombre;
+               this.prioridad = prioridad; // 'Baja', 'Media', 'Alta'
+               this.estado = estado; // 'Pendiente', 'Completada'
+               this.fechaCreacion = fechaCreacion; // Date object
+           }
+       }
+
+       let tareas = [];
+
+       function agregarTarea() {
+           const nombre = document.getElementById('nombre').value;
+           const prioridad = document.getElementById('prioridad').value;
+
+           if (nombre.trim() === '') {
+               alert("El nombre de la tarea no puede estar vacío.");
+               return;
+           }
+
+           const nuevaTarea = new Tarea(nombre, prioridad, 'Pendiente', new Date());
+           tareas.push(nuevaTarea);
+           document.getElementById('nombre').value = '';
+           mostrarTareas();
+       }
+
+       function mostrarTareas() {
+           const contenedor = document.getElementById('tareas');
+           contenedor.innerHTML = '';
+
+           const mostrarCompletadas = document.getElementById('mostrarCompletadas').checked;
+           const filtroPrioridad = document.getElementById('filtroPrioridad').value;
+
+           const tareasAFiltrar = tareas.filter(t => {
+               const estadoCondicion = mostrarCompletadas ? t.estado === 'Completada' : true;
+               const prioridadCondicion = filtroPrioridad === 'Todas' || t.prioridad === filtroPrioridad;
+               return estadoCondicion && prioridadCondicion;
+           });
+
+           tareasAFiltrar.forEach((tarea, index) => {
+               const div = document.createElement('div');
+               div.className = `tarea ${getPrioridadClass(tarea.prioridad)}`;
+               
+               div.innerHTML = `
+                   <span>${tarea.nombre}</span>
+                   <span>${tarea.prioridad}</span>
+                   <span>${tarea.estado}</span>
+                   <button onclick="completarTarea(${index})">${tarea.estado === 'Pendiente' ? 'Completar' : 'Eliminar'}</button>
+               `;
+               contenedor.appendChild(div);
+           });
+
+           actualizarContadores();
+       }
+
+       function completarTarea(index) {
+           if (tareas[index].estado === 'Pendiente') {
+               tareas[index].estado = 'Completada';
+           } else {
+               tareas.splice(index, 1);
+           }
+           mostrarTareas();
+       }
+
+       function actualizarContadores() {
+           const totalTareas = tareas.length;
+           const totalCompletadas = tareas.filter(t => t.estado === 'Completada').length;
+           
+           document.getElementById('totalTareas').innerText = `Total de tareas: ${totalTareas}`;
+           document.getElementById('totalCompletadas').innerText = `Tareas completadas: ${totalCompletadas}`;
+       }
+
+       function getPrioridadClass(prioridad) {
+           switch (prioridad) {
+               case 'Baja': return 'prioridad-baja';
+               case 'Media': return 'prioridad-media';
+               case 'Alta': return 'prioridad-alta';
+               default: return '';
+           }
+       }
+   </script>
+</body>
+</html>
